@@ -56,9 +56,9 @@ ssh_login    = "ssh -i tfesshkey.pem ubuntu@dmitry-fdo-es.tf-support.hashicorpde
 tfe_hostname = "https://dmitry-fdo-es.tf-support.hashicorpdemo.com"
 ```
 
-## Installing TFE FDO Beta
+# Installing TFE FDO Beta
 
-# SSH into the new instance
+## SSH into the new instance
 
 Copy the SSH login command from the above-mentioned Output, paste it into the Terminal and hit Enter. Type Y and hit Enter again.
 
@@ -66,7 +66,7 @@ Copy the SSH login command from the above-mentioned Output, paste it into the Te
 ssh -i tfesshkey.pem ubuntu@dmitry-fdo-es.tf-support.hashicorpdemo.com
 ```
 
-# Generate and upload the certificates
+## Generate and upload the certificates
 
 Run the following commands to generate CA-signed certificates:
 
@@ -142,7 +142,7 @@ cp fullchain.pem cert.pem
 cp fullchain.pem bundle.pem
 ```
 
-# Prepare YAML file
+## Prepare YAML file
 
 In this example, we will install Terraform Enterprise in External Services mode.
 
@@ -204,7 +204,7 @@ volumes:
 
 Be sure to double-check and adjust the following values:
 
-**TFE_LICENSE** - your actual FDO license, can be generated on https://license.hashicorp.services/ (more details - https://hashicorp.atlassian.net/wiki/spaces/~638da7e4fde064eda2f1deb3/pages/2711126362/How+to+create+a+test+license+for+FDO+Beta+installation)
+**TFE_LICENSE** - your actual FDO license from https://license.hashicorp.services/
 
 **TFE_HOSTNAME** - FQDN; will be visible in Output after you run `terraform apply`
 
