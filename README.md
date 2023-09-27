@@ -48,12 +48,12 @@ When prompted, type **yes** and hit **Enter** to start provisioning AWS infrastr
 You should see the similar result:
 
 ```
-Apply complete! Resources: 27 added, 0 changed, 0 destroyed.
+Apply complete! Resources: 34 added, 0 changed, 0 destroyed.
 
 Outputs:
 
-ssh_login    = "ssh -i tfesshkey.pem ubuntu@dmitry-fdo-es.tf-support.hashicorpdemo.com"
-tfe_hostname = "https://dmitry-fdo-es.tf-support.hashicorpdemo.com"
+ssh_login = "ssh -i tfesshkey.pem ubuntu@dmitry-fdo-test.tf-support.hashicorpdemo.com"
+tfe_hostname = "https://dmitry-fdo-test.tf-support.hashicorpdemo.com"
 ```
 
 # Installing TFE FDO Beta
@@ -65,83 +65,6 @@ Copy the SSH login command from the above-mentioned Output, paste it into the Te
 ```
 ssh -i tfesshkey.pem ubuntu@dmitry-fdo-es.tf-support.hashicorpdemo.com
 ```
-
-## Generate and upload the certificates
-
-Run the following commands to generate CA-signed certificates:
-
-```
-sudo snap install --classic certbot
-
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-
-sudo certbot certonly --standalone
-```
-
-
-Follow the instructions to obtain the certificates (enter your email address; Y; N; enter domain name):
-
-```
-Saving debug log to /var/log/letsencrypt/letsencrypt.log
-Enter email address (used for urgent renewal and security notices)
-(Enter 'c' to cancel): dmitry.uchuvatov@hashicorp.com
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Please read the Terms of Service at
-https://letsencrypt.org/documents/LE-SA-v1.3-September-21-2022.pdf. You must
-agree in order to register with the ACME server. Do you agree?
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-(Y)es/(N)o: Y
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Would you be willing, once your first certificate is successfully issued, to
-share your email address with the Electronic Frontier Foundation, a founding
-partner of the Let's Encrypt project and the non-profit organization that
-develops Certbot? We'd like to send you email about our work encrypting the web,
-EFF news, campaigns, and ways to support digital freedom.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-(Y)es/(N)o: N
-Account registered.
-Please enter the domain name(s) you would like on your certificate (comma and/or
-space separated) (Enter 'c' to cancel): dmitry-fdo-es.tf-support.hashicorpdemo.com    
-Requesting a certificate for dmitry-fdo-es.tf-support.hashicorpdemo.com
-
-Successfully received certificate.
-Certificate is saved at: /etc/letsencrypt/live/dmitry-fdo-es.tf-support.hashicorpdemo.com/fullchain.pem
-Key is saved at:         /etc/letsencrypt/live/dmitry-fdo-es.tf-support.hashicorpdemo.com/privkey.pem
-This certificate expires on 2023-12-12.
-These files will be updated when the certificate renews.
-Certbot has set up a scheduled task to automatically renew this certificate in the background.
-```
-
-Then, create a new directory dedicated for TFE FDO-Beta installation files, and change into it:
-
-```
-mkdir fdo
-cd fdo
-```
-
-Create a certs directory, and change into it:
-
-```
-mkdir certs
-cd certs
-```
-
-Copy the certificates into certs directory:
-
-```
-sudo bash
-cp /etc/letsencrypt/live/dmitry-fdo-es.tf-support.hashicorpdemo.com/* ./
-```
-
-Run the following commands to adjust their names according to requirements:
-
-```
-cp privkey.pem key.pem
-cp fullchain.pem cert.pem
-cp fullchain.pem bundle.pem
-```
-
 ## Prepare YAML file
 
 In this example, we will install Terraform Enterprise in External Services mode.
@@ -153,10 +76,10 @@ Create a `compose.yaml` file in `fdo` directory and populate it with your desire
 name: terraform-enterprise
 services:
   tfe:
-    image: terraform-enterprise-beta.terraform.io/terraform-enterprise:beta-1
+    image: images.releases.hashicorp.com/hashicorp/terraform-enterprise:v202309-1
     environment:
-      TFE_LICENSE: "paste_your_license_here"
-      TFE_HOSTNAME: dmitry-fdo-es.tf-support.hashicorpdemo.com
+      TFE_LICENSE: "02MV4UU43BK5HGYYTOJZWFQMTMNNEWU33JLFVE252ZK5HG2TKEKF2E4RCONRHUGMBVJVDVCM2MKRVTCT2EM52FS2SJPJGTEVTMJV5FSNCNNVHG2SLJO5UVSM2WPJSEOOLULJMEUZTBK5IWST3JJJWE2VCNGJHFOTTKJVUTC2C2NJWGWTCUJE2U4VCBORGUITJVJVUTC3C2NJMTETTNKEYFSVCNO5MXUQLJJRBUU4DCNZHDAWKXPBZVSWCSOBRDENLGMFLVC2KPNFEXCSLJO5UWCWCOPJSFOVTGMRDWY5C2KNETMSLKJF3U22SNORGUI23UJVKEUVKNIRTTMTLKLE3E4VCBOVGWURLYJVKFCMKOIRRXSV3JJFZUS3SOGBMVQSRQLAZVE4DCK5KWST3JJF4U2RCJPJGFIQJVJRKEK6KWIRAXOT3KIF3U62SBO5LWSSLTJFWVMNDDI5WHSWKYKJYGEMRVMZSEO3DULJJUSNSJNJEXOTLKKV2E2RCFORGUIRSVJVCECNSNIRATMTKEIJQUS2LXNFSEOVTZMJLWY5KZLBJHAYRSGVTGIR3MORNFGSJWJFVES52NNJKXITKEIV2E2RCGKVGUIQJWJVCECNSNIRBGCSLJO5UWGSCKOZNEQVTKMRBUSNSJNZJGYY3OJJUFU3JZPFRFGSLTJFWVU42ZK5SHUSLKOA3WMWBQHUXGCQ3SM5MXA32VPB3GQTTJJJYFU2ZSKVMDO5DMKZBWOOJUIUVUCSRSJYYHU4LMOVSWS3LRPFLDIVDPF5EES3CFNYXUWTTFMR4WW4ZQNFEDCUSEGJVWMTKOMMYE4YJQINVXUSKEI5BDKMLEIFVWGYJUMRLDAMZTHBIHO3KWNRQXMSSQGRYEU6CJJE4UINSVIZGFKYKWKBVGWV2KORRUINTQMFWDM32PMZDW4SZSPJIEWSSSNVDUQVRTMVNHO4KGMUVW6N3LF5ZSWQKUJZUFAWTHKMXUWVSZM4XUWK3MI5IHOTBXNJBHQSJXI5HWC2ZWKVQWSYKIN5SWWMCSKRXTOMSEKE6T2"
+      TFE_HOSTNAME: dmitry-fdo-test.tf-support.hashicorpdemo.com
       TFE_ENCRYPTION_PASSWORD: "Password1#"
       TFE_OPERATIONAL_MODE: "external"
       TFE_DISK_CACHE_VOLUME_NAME: ${COMPOSE_PROJECT_NAME}_terraform-enterprise-cache
@@ -168,14 +91,14 @@ services:
       # Database settings
       TFE_DATABASE_USER: "postgres"
       TFE_DATABASE_PASSWORD: "Password1#"
-      TFE_DATABASE_HOST: "dmitry-fdo-es-postgres.cheg1b8bnf4j.eu-west-2.rds.amazonaws.com"
+      TFE_DATABASE_HOST: "dmitry-fdo-test-postgres.cheg1b8bnf4j.eu-west-2.rds.amazonaws.com"
       TFE_DATABASE_NAME: "fdo"
       TFE_DATABASE_PARAMETERS: "sslmode=disable"
 
       # Object storage settings
       TFE_OBJECT_STORAGE_TYPE: "s3"
       TFE_OBJECT_STORAGE_S3_REGION: "eu-west-2"
-      TFE_OBJECT_STORAGE_S3_BUCKET: "dmitry-fdo-es-bucket"
+      TFE_OBJECT_STORAGE_S3_BUCKET: "dmitry-fdo-test-bucket"
       TFE_OBJECT_STORAGE_S3_USE_INSTANCE_PROFILE: "true"
     cap_add:
       - IPC_LOCK
@@ -201,7 +124,6 @@ volumes:
   terraform-enterprise-cache:
 ```
 
-
 Be sure to double-check and adjust the following values:
 
 **TFE_LICENSE** - your actual FDO license from https://license.hashicorp.services/
@@ -214,19 +136,24 @@ Be sure to double-check and adjust the following values:
 
 ## Install TFE
 
-First of all, export the Docker credentials as environmental variables:
+Change the directory to FDO and run the following command:
 
 ```
-export TFE_FDO_BETA_USERNAME=hc-support-tfe-beta 
-export TFE_FDO_BETA_TOKEN=3gdnBJlYWMvOgnnL0GnEMrff2t5dBmLR4OuMt+Niph+ACRDyGuJE 
+cd /fdo/
+sudo bash
 ```
 
-Then, run the following command to authenticate to container registry:
+Log in to the Terraform Enterprise container image registry:
 
 ```
-docker login -u $TFE_FDO_BETA_USERNAME -p $TFE_FDO_BETA_TOKEN terraform-enterprise-beta.terraform.io
+cat /fdo/terraform.hclic | docker login --username terraform images.releases.hashicorp.com --password-stdin
 ```
+ 
+Pull the Terraform Enterprise image from the registry:
 
+```
+docker pull images.releases.hashicorp.com/hashicorp/terraform-enterprise:v202309-1
+```
 
 Spin up your Terraform Enterprise container by running:
 
