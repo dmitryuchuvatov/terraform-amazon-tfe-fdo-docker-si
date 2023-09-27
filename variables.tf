@@ -57,3 +57,8 @@ variable "postgresql_password" {
   description = "PostgreSQL password"
   type        = string
 }
+
+variable "cert_email" {
+  description = "Email address used to obtain SSL certificate"
+  type        = string
+}

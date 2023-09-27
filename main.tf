@@ -9,8 +9,8 @@ resource "aws_vpc" "tfe" {
 
 # Public Subnet #1
 resource "aws_subnet" "tfe_public" {
-  vpc_id     = aws_vpc.tfe.id
-  cidr_block = cidrsubnet(var.vpc_cidr, 8, 0)
+  vpc_id            = aws_vpc.tfe.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 0)
   availability_zone = "${var.region}b"
 
   tags = {
@@ -20,8 +20,8 @@ resource "aws_subnet" "tfe_public" {
 
 # Public Subnet #2
 resource "aws_subnet" "tfe_public2" {
-  vpc_id     = aws_vpc.tfe.id
-  cidr_block = cidrsubnet(var.vpc_cidr, 8, 1)
+  vpc_id            = aws_vpc.tfe.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 1)
   availability_zone = "${var.region}c"
 
   tags = {
@@ -176,8 +176,8 @@ resource "aws_instance" "tfe" {
   subnet_id              = aws_subnet.tfe_public.id
   iam_instance_profile   = aws_iam_instance_profile.tfe_profile.name
 
-  user_data = "${file("install_docker.sh")}"
-  
+  user_data = file("config.sh")
+
   root_block_device {
     volume_size = 50
   }
@@ -214,6 +214,35 @@ resource "aws_route53_record" "www" {
   records = [aws_eip.eip_tfe.public_ip]
 }
 
+# SSL certificate
+resource "tls_private_key" "cert_private_key" {
+  algorithm = "RSA"
+}
+
+resource "acme_registration" "registration" {
+  account_key_pem = tls_private_key.cert_private_key.private_key_pem
+  email_address   = var.cert_email
+}
+
+resource "acme_certificate" "certificate" {
+  account_key_pem = acme_registration.registration.account_key_pem
+  common_name     = local.fqdn
+
+  dns_challenge {
+    provider = "route53"
+
+    config = {
+      AWS_HOSTED_ZONE_ID = data.aws_route53_zone.selected.zone_id
+    }
+  }
+}
+
+resource "aws_acm_certificate" "cert" {
+  private_key       = acme_certificate.certificate.private_key_pem
+  certificate_body  = acme_certificate.certificate.certificate_pem
+  certificate_chain = acme_certificate.certificate.issuer_pem
+}
+
 # S3 bucket
 resource "aws_s3_bucket" "tfe_files" {
   bucket = "${var.environment_name}-bucket"
@@ -230,6 +259,25 @@ resource "aws_s3_bucket_public_access_block" "tfe_files" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+# Upload license and certificate
+resource "aws_s3_object" "fdo_license" {
+  bucket = aws_s3_bucket.tfe_files.bucket
+  key    = "terraform.hclic"
+  source = "license/terraform.hclic"
+}
+
+resource "aws_s3_object" "certificate" {
+  bucket  = aws_s3_bucket.tfe_files.bucket
+  key     = "cert.pem"
+  content = "${acme_certificate.certificate.certificate_pem}${acme_certificate.certificate.issuer_pem}"
+}
+
+resource "aws_s3_object" "private_key" {
+  bucket  = aws_s3_bucket.tfe_files.bucket
+  key     = "key.pem"
+  content = acme_certificate.certificate.private_key_pem
 }
 
 # IAM

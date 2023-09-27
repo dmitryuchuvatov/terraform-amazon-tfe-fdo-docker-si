@@ -5,9 +5,17 @@ terraform {
       source  = "hashicorp/aws"
       version = "4.41.0"
     }
+    acme = {
+      source  = "vancluever/acme"
+      version = "2.11.1"
+    }
   }
 }
 
 provider "aws" {
   region = var.region
+}
+
+provider "acme" {
+  server_url = "https://acme-v02.api.letsencrypt.org/directory"
 }
