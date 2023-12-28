@@ -1,5 +1,11 @@
 # Terraform Enterprise Flexible Deployment Options - Docker
 
+This repository creates a new installation of TFE FDO in External Services mode on AWS
+
+# Diagram
+
+![tfe_fdo_external_services_on_aws](https://github.com/dmitryuchuvatov/fdo-es-docker/assets/119931089/2a35663a-4022-41a0-b1d4-350a503db66b)
+
 
 # Prerequisites
 + Have Terraform installed as per the [official documentation](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
@@ -79,4 +85,4 @@ tfe_hostname = "https://dmitry-fdo.tf-support.hashicorpdemo.com"
 
 ## Next steps
 
-[Provision your first administrative user]([https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user)) and start using Terraform Enterprise.
+[Provision your first administrative user](https://developer.hashicorp.com/terraform/enterprise/flexible-deployments/install/initial-admin-user) and start using Terraform Enterprise.
