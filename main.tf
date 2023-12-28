@@ -18,17 +18,6 @@ resource "aws_subnet" "tfe_public" {
   }
 }
 
-# Public Subnet #2
-resource "aws_subnet" "tfe_public2" {
-  vpc_id            = aws_vpc.tfe.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 1)
-  availability_zone = "${var.region}c"
-
-  tags = {
-    Name = "${var.environment_name}-subnet-public2"
-  }
-}
-
 # Private Subnet #1
 resource "aws_subnet" "tfe_private" {
   vpc_id            = aws_vpc.tfe.id
@@ -176,7 +165,20 @@ resource "aws_instance" "tfe" {
   subnet_id              = aws_subnet.tfe_public.id
   iam_instance_profile   = aws_iam_instance_profile.tfe_profile.name
 
-  user_data = file("config.sh")
+  user_data = templatefile("${path.module}/scripts/cloud-init.tpl", {
+    region              = var.region
+    environment_name    = var.environment_name
+    tfe_release         = var.tfe_release
+    tfe_license         = var.tfe_license
+    tfe_password        = var.tfe_password
+    route53_zone        = var.route53_zone
+    route53_subdomain   = var.route53_subdomain
+    postgresql_user     = var.postgresql_user
+    postgresql_password = var.postgresql_password
+    database_name       = var.database_name
+    postgresql_fqdn     = aws_db_instance.tfe.address
+    s3_bucket           = aws_s3_bucket.tfe_files.id
+  })
 
   root_block_device {
     volume_size = 50
@@ -261,13 +263,6 @@ resource "aws_s3_bucket_public_access_block" "tfe_files" {
   restrict_public_buckets = true
 }
 
-# Upload license and certificate
-resource "aws_s3_object" "fdo_license" {
-  bucket = aws_s3_bucket.tfe_files.bucket
-  key    = "terraform.hclic"
-  source = "license/terraform.hclic"
-}
-
 resource "aws_s3_object" "certificate" {
   bucket  = aws_s3_bucket.tfe_files.bucket
   key     = "cert.pem"
@@ -316,11 +311,11 @@ resource "aws_iam_role_policy_attachment" "test-attach" {
 resource "aws_db_instance" "tfe" {
   identifier          = "${var.environment_name}-postgres"
   allocated_storage   = 50
-  db_name             = "fdo"
+  db_name             = var.database_name
   engine              = "postgres"
   engine_version      = "14.5"
   instance_class      = "db.m5.large"
-  username            = "postgres"
+  username            = var.postgresql_user
   password            = var.postgresql_password
   skip_final_snapshot = true
 

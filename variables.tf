@@ -53,12 +53,37 @@ variable "route53_subdomain" {
   type        = string
 }
 
+variable "postgresql_user" {
+  description = "PostgreSQL user"
+  type        = string
+}
+
 variable "postgresql_password" {
   description = "PostgreSQL password"
   type        = string
 }
 
+variable "database_name" {
+  description = "PostgreSQL DB name"
+  type        = string
+}
+
 variable "cert_email" {
   description = "Email address used to obtain SSL certificate"
+  type        = string
+}
+
+variable "tfe_release" {
+  description = "TFE release"
+  type        = string
+}
+
+variable "tfe_license" {
+  description = "TFE license"
+  type        = string
+}
+
+variable "tfe_password" {
+  description = "TFE password"
   type        = string
 }
