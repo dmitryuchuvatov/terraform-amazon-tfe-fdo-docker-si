@@ -4,7 +4,8 @@ This repository creates a new installation of TFE FDO in External Services mode 
 
 # Diagram
 
-![tfe_fdo_external_services_on_aws](https://github.com/dmitryuchuvatov/fdo-es-docker/assets/119931089/2a35663a-4022-41a0-b1d4-350a503db66b)
+
+![tfe_fdo_external_services_on_aws](https://github.com/dmitryuchuvatov/fdo-es-docker/assets/119931089/6a5ac984-f235-4bda-b3a3-a5c6d8723bd9)
 
 
 # Prerequisites
