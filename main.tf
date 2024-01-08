@@ -9,9 +9,9 @@ resource "aws_vpc" "tfe" {
 
 # Public Subnet #1
 resource "aws_subnet" "tfe_public" {
-  vpc_id            = aws_vpc.tfe.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 0)
   availability_zone = "${var.region}b"
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 0)
+  vpc_id            = aws_vpc.tfe.id
 
   tags = {
     Name = "${var.environment_name}-subnet-public"
@@ -19,21 +19,21 @@ resource "aws_subnet" "tfe_public" {
 }
 
 # Private Subnet #1
-resource "aws_subnet" "tfe_private" {
-  vpc_id            = aws_vpc.tfe.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 10)
+resource "aws_subnet" "tfe_private1" {
   availability_zone = "${var.region}b"
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 10)
+  vpc_id            = aws_vpc.tfe.id
 
   tags = {
-    Name = "${var.environment_name}-subnet-private"
+    Name = "${var.environment_name}-subnet-private1"
   }
 }
 
 # Private Subnet #2
 resource "aws_subnet" "tfe_private2" {
-  vpc_id            = aws_vpc.tfe.id
-  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 11)
   availability_zone = "${var.region}c"
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 11)
+  vpc_id            = aws_vpc.tfe.id
 
   tags = {
     Name = "${var.environment_name}-subnet-private2"
@@ -91,53 +91,48 @@ resource "aws_security_group" "tfe_sg" {
 }
 
 resource "aws_security_group_rule" "allow_ssh_inbound" {
-  type              = "ingress"
+  cidr_blocks       = [local.all_ips]
+  from_port         = "22"
+  protocol          = "tcp"
   security_group_id = aws_security_group.tfe_sg.id
-
-  from_port   = var.ssh_port
-  to_port     = var.ssh_port
-  protocol    = local.tcp_protocol
-  cidr_blocks = [local.all_ips]
+  to_port           = "22"
+  type              = "ingress"
 }
 
 resource "aws_security_group_rule" "allow_http_inbound" {
-  type              = "ingress"
+  cidr_blocks       = [local.all_ips]
+  from_port         = "80"
+  protocol          = "tcp"
   security_group_id = aws_security_group.tfe_sg.id
-
-  from_port   = var.http_port
-  to_port     = var.http_port
-  protocol    = local.tcp_protocol
-  cidr_blocks = [local.all_ips]
+  to_port           = "80"
+  type              = "ingress"
 }
 
 resource "aws_security_group_rule" "allow_https_inbound" {
-  type              = "ingress"
+  cidr_blocks       = [local.all_ips]
+  from_port         = "443"
+  protocol          = "tcp"
   security_group_id = aws_security_group.tfe_sg.id
-
-  from_port   = var.https_port
-  to_port     = var.https_port
-  protocol    = local.tcp_protocol
-  cidr_blocks = [local.all_ips]
+  to_port           = "443"
+  type              = "ingress"
 }
 
 resource "aws_security_group_rule" "allow_postgresql_inbound_vpc" {
-  type              = "ingress"
+  cidr_blocks       = [aws_vpc.tfe.cidr_block]
+  from_port         = "5432"
+  protocol          = "tcp"
   security_group_id = aws_security_group.tfe_sg.id
-
-  from_port   = var.postgresql_port
-  to_port     = var.postgresql_port
-  protocol    = local.tcp_protocol
-  cidr_blocks = [aws_vpc.tfe.cidr_block]
+  to_port           = "5432"
+  type              = "ingress"
 }
 
 resource "aws_security_group_rule" "allow_all_outbound" {
-  type              = "egress"
+  cidr_blocks       = [local.all_ips]
+  from_port         = "0"
+  protocol          = "-1"
   security_group_id = aws_security_group.tfe_sg.id
-
-  from_port   = local.any_port
-  to_port     = local.any_port
-  protocol    = local.any_protocol
-  cidr_blocks = [local.all_ips]
+  to_port           = "0"
+  type              = "egress"
 }
 
 # EC2
@@ -159,25 +154,24 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_instance" "tfe" {
   ami                    = data.aws_ami.ubuntu.image_id
+  iam_instance_profile   = aws_iam_instance_profile.tfe_profile.name
   instance_type          = var.instance_type
   key_name               = aws_key_pair.tfe.key_name
-  vpc_security_group_ids = [aws_security_group.tfe_sg.id]
   subnet_id              = aws_subnet.tfe_public.id
-  iam_instance_profile   = aws_iam_instance_profile.tfe_profile.name
+  vpc_security_group_ids = [aws_security_group.tfe_sg.id]
 
   user_data = templatefile("${path.module}/scripts/cloud-init.tpl", {
-    region              = var.region
-    environment_name    = var.environment_name
-    tfe_release         = var.tfe_release
-    tfe_license         = var.tfe_license
-    tfe_password        = var.tfe_password
-    route53_zone        = var.route53_zone
-    route53_subdomain   = var.route53_subdomain
-    postgresql_user     = var.postgresql_user
-    postgresql_password = var.postgresql_password
     database_name       = var.database_name
     postgresql_fqdn     = aws_db_instance.tfe.address
+    postgresql_password = var.postgresql_password
+    postgresql_user     = var.postgresql_user
+    region              = var.region
+    route53_subdomain   = var.route53_subdomain
+    route53_zone        = var.route53_zone
     s3_bucket           = aws_s3_bucket.tfe_files.id
+    tfe_license         = var.tfe_license
+    tfe_password        = var.tfe_password
+    tfe_release         = var.tfe_release
   })
 
   root_block_device {
@@ -192,14 +186,15 @@ resource "aws_instance" "tfe" {
 # Public IP
 resource "aws_eip" "eip_tfe" {
   vpc = true
+
   tags = {
     Name = "${var.environment_name}-eip"
   }
 }
 
 resource "aws_eip_association" "eip_assoc" {
-  instance_id   = aws_instance.tfe.id
   allocation_id = aws_eip.eip_tfe.id
+  instance_id   = aws_instance.tfe.id
 }
 
 # DNS
@@ -209,11 +204,11 @@ data "aws_route53_zone" "selected" {
 }
 
 resource "aws_route53_record" "www" {
-  zone_id = data.aws_route53_zone.selected.zone_id
   name    = local.fqdn
-  type    = "A"
-  ttl     = "300"
   records = [aws_eip.eip_tfe.public_ip]
+  ttl     = "300"
+  type    = "A"
+  zone_id = data.aws_route53_zone.selected.zone_id
 }
 
 # SSL certificate
@@ -240,9 +235,9 @@ resource "acme_certificate" "certificate" {
 }
 
 resource "aws_acm_certificate" "cert" {
-  private_key       = acme_certificate.certificate.private_key_pem
   certificate_body  = acme_certificate.certificate.certificate_pem
   certificate_chain = acme_certificate.certificate.issuer_pem
+  private_key       = acme_certificate.certificate.private_key_pem
 }
 
 # S3 bucket
@@ -265,14 +260,14 @@ resource "aws_s3_bucket_public_access_block" "tfe_files" {
 
 resource "aws_s3_object" "certificate" {
   bucket  = aws_s3_bucket.tfe_files.bucket
-  key     = "cert.pem"
   content = "${acme_certificate.certificate.certificate_pem}${acme_certificate.certificate.issuer_pem}"
+  key     = "cert.pem"
 }
 
 resource "aws_s3_object" "private_key" {
   bucket  = aws_s3_bucket.tfe_files.bucket
-  key     = "key.pem"
   content = acme_certificate.certificate.private_key_pem
+  key     = "key.pem"
 }
 
 # IAM
@@ -282,8 +277,6 @@ resource "aws_iam_instance_profile" "tfe_profile" {
 }
 
 resource "aws_iam_role" "tfe_s3_role" {
-  name = "${var.environment_name}-role"
-
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -296,6 +289,7 @@ resource "aws_iam_role" "tfe_s3_role" {
       }
     ]
   })
+  name = "${var.environment_name}-role"
 
   tags = {
     tag-key = "${var.environment_name}-role"
@@ -309,19 +303,18 @@ resource "aws_iam_role_policy_attachment" "test-attach" {
 
 # RDS
 resource "aws_db_instance" "tfe" {
-  identifier          = "${var.environment_name}-postgres"
-  allocated_storage   = 50
-  db_name             = var.database_name
-  engine              = "postgres"
-  engine_version      = "14.5"
-  instance_class      = "db.m5.large"
-  username            = var.postgresql_user
-  password            = var.postgresql_password
-  skip_final_snapshot = true
-
-  multi_az               = false
-  vpc_security_group_ids = [aws_security_group.tfe_sg.id]
+  allocated_storage      = 50
+  db_name                = var.database_name
   db_subnet_group_name   = aws_db_subnet_group.tfe.name
+  engine                 = "postgres"
+  engine_version         = "14.5"
+  identifier             = "${var.environment_name}-postgres"
+  instance_class         = "db.m5.large"
+  multi_az               = false
+  password               = var.postgresql_password
+  skip_final_snapshot    = true
+  username               = var.postgresql_user
+  vpc_security_group_ids = [aws_security_group.tfe_sg.id]
 
   tags = {
     Name = "${var.environment_name}-postgres"
@@ -330,7 +323,7 @@ resource "aws_db_instance" "tfe" {
 
 resource "aws_db_subnet_group" "tfe" {
   name       = "${var.environment_name}-subnetgroup"
-  subnet_ids = [aws_subnet.tfe_private.id, aws_subnet.tfe_private2.id]
+  subnet_ids = [aws_subnet.tfe_private1.id, aws_subnet.tfe_private2.id]
 
   tags = {
     Name = "${var.environment_name}-subnetgroup"
