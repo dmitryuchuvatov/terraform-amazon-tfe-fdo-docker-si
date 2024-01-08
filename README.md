@@ -29,7 +29,8 @@ git clone https://github.com/dmitryuchuvatov/fdo-es-docker.git
 cd fdo-es-docker
 ```
 
-## Create a file called `terraform.tfvars` with the following content and your own values
+## Rename the file called `terraform.tfvars-sample` to `terraform.tfvars` and replace the values with your own.
+The current content is below:
 
 ```
 region              = "eu-west-3"                           # AWS region to deploy in
