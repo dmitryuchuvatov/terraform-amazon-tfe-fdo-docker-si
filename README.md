@@ -20,13 +20,13 @@ This repository creates a new installation of TFE FDO in External Services mode 
 ## Clone repository
 
 ```
-git clone https://github.com/dmitryuchuvatov/fdo-es-docker.git
+git clone https://github.com/dmitryuchuvatov/terraform-amazon-tfe-fdo-docker-si.git
 ```
 
 ## Change folder
 
 ```
-cd fdo-es-docker
+cd terraform-amazon-tfe-fdo-docker-si
 ```
 
 ## Rename the file called `terraform.tfvars-sample` to `terraform.tfvars` and replace the values with your own.
