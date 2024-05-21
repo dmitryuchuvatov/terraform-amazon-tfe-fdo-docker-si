@@ -1,6 +1,6 @@
-# Terraform Enterprise Flexible Deployment Options - Docker
+# Terraform Enterprise Flexible Deployment Options - External Services mode on Docker (AWS)
 
-This repository creates a new installation of TFE FDO in External Services mode on AWS
+This repository creates a new installation of TFE FDO in External Services mode on Docker (AWS)
 
 # Diagram
 
